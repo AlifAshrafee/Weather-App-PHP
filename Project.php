@@ -1,25 +1,18 @@
 <?php
 $weather = "";
 $error = "";
-if (array_key_exists("city",$_GET)) {
-    $city = str_replace(" ", "", $_GET["city"]);
+if (array_key_exists("city", $_GET)) {
 
-    $file_headers = @get_headers("https://www.weather-forecast.com/locations/" . $city . "/forecasts/latest");
-    if (!$file_headers || $file_headers[0] == 'HTTP/1.1 404 Not Found') {
-        $error = "The city you entered could not be found";
+    $urlContents = file_get_contents("https://api.openweathermap.org/data/2.5/weather?q=" . urlencode($_GET["city"]) . "&appid=b3ba66eb7b1000fae06bca5f4672739a");
+
+    $weatherArray = json_decode($urlContents, true);
+
+    //print_r($weatherArray);
+
+    if ($weatherArray["cod"] == 200) {
+        $weather = "<b>" . $_GET["city"] . " weather summary</b><br> Condtion: " . $weatherArray["weather"][0]["main"] . "<br> Description: " . $weatherArray["weather"][0]["description"] . "<br> Temperature: " . round($weatherArray["main"]["temp"] - 273.15) . " &deg;C" . "<br> Humidity: " . $weatherArray["main"]["humidity"];
     } else {
-        $content = file_get_contents("https://www.weather-forecast.com/locations/" . $city . "/forecasts/latest");
-        $array1 = explode('Weather Today</h2> (1–3 days)</div><p class="b-forecast__table-description-content"><span class="phrase">', $content);
-        if (sizeof($array1) > 1) {
-            $array2 = explode('</span></p></td><td class="b-forecast__table-description-cell--js" colspan="9"><div class="b-forecast__table-description-title">', $array1[1]);
-            if (sizeof($array2) > 1) {
-                $weather = $array2[0];
-            } else {
-                $error = "The city you entered could not be found";
-            }
-        } else {
-            $error = "The city you entered could not be found";
-        }
+        $error = "The city name you entered couldn't be found";
     }
 }
 ?>
@@ -73,12 +66,11 @@ if (array_key_exists("city",$_GET)) {
         <form>
             <div class="form-group">
                 <label for="city">Enter the name of a city</label>
-                <input type="text" class="form-control" id="city" name="city" aria-describedby="emailHelp" placeholder="Eg. New York, Dhaka" value=
-                "<?php 
-                    if (array_key_exists("city",$_GET)){
-                        echo $_GET["city"];
-                    }
-                ?>">
+                <input type="text" class="form-control" id="city" name="city" aria-describedby="emailHelp" placeholder="Eg. New York, Dhaka" value="<?php
+                                                                                                                                                    if (array_key_exists("city", $_GET)) {
+                                                                                                                                                        echo $_GET["city"];
+                                                                                                                                                    }
+                                                                                                                                                    ?>">
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
